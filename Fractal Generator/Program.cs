@@ -59,34 +59,32 @@ namespace Fractal_Generator
                 inputCenter = new PointF((float)-centerX, (float)centerY);
             }
 
-            int numberOfCores = Environment.ProcessorCount;
-            numberOfCores = prompt.Prompt($"Enter the number of cores to use (1 to {Environment.ProcessorCount})",
-                                                 PromptOptions.Optional,
-                                                 numberOfCores,
-                                                 $"The value must be between 1 and {Environment.ProcessorCount}",
-                                                 delegate (int x) { return x >= 1 && x <= Environment.ProcessorCount; });
+            int numberOfCores = prompt.Prompt($"Enter the number of cores to use (1 to {Environment.ProcessorCount})",
+                                              PromptOptions.Optional,
+                                              Environment.ProcessorCount,
+                                              $"The value must be between 1 and {Environment.ProcessorCount}",
+                                              delegate (int x) { return x >= 1 && x <= Environment.ProcessorCount; });
 
             // Setup the number of chunks to break into.
-            int numberOfChunks = numberOfCores * 2;
-            numberOfChunks = prompt.Prompt("Enter the number of chunks to break into", PromptOptions.Optional, numberOfChunks);
+            int numberOfChunks = prompt.Prompt("Enter the number of chunks to break into", PromptOptions.Optional, numberOfCores * 2);
+            
+            int numberOfColors = prompt.Prompt("Enter the number of colors to render",
+                                               PromptOptions.Optional,
+                                               32,
+                                               "The value must be between 2 and 256",
+                                               delegate (int x) { return x >= 2 && x <= 256; });
 
-            int numberOfColors = 32;
-            numberOfColors = prompt.Prompt("Enter the number of colors to render",
-                                                  PromptOptions.Optional,
-                                                  numberOfColors,
-                                                  "The value must be between 2 and 256",
-                                                  delegate (int x) { return x >= 2 && x <= 256; });
+            bool blackFinalColor = prompt.Prompt("Use black for max iteration color?",
+                                                 PromptOptions.Optional,
+                                                 'Y',
+                                                 null,
+                                                 validateYesNo,
+                                                 charToUpper) == 'Y';
 
             Console.WriteLine("");
 
             Console.WriteLine($"Creating Mandelbrot image of size ({imageSize.Width},{imageSize.Height}) and max iteration count of {maxIterations}, splitting the image into {numberOfChunks} sections across {numberOfCores} cores.");
 
-            bool blackFinalColor = false;
-
-            if (prompt.Prompt("Use black for max iteration color?", PromptOptions.Optional, 'Y', null, validateYesNo, charToUpper) == 'Y')
-            {
-                blackFinalColor = true;
-            }
 
             Stopwatch sw = new Stopwatch();
             sw.Start();
@@ -95,10 +93,10 @@ namespace Fractal_Generator
             ushort[] results = g.Generate(center, scaleSize);
 
             sw.Stop();
-            Console.WriteLine("Took {0}ms.", sw.ElapsedMilliseconds);
+            Console.WriteLine($"Took {sw.ElapsedMilliseconds}ms.");
             Console.WriteLine("Mandelbrot created, building image...");
 
-            string filename = prompt.Prompt("Enter a file name to save as", PromptOptions.Optional, inputCenter.ToString() + "@" + scale + ".png");
+            string filename = prompt.Prompt("Enter a file name to save as", PromptOptions.Optional, $"{inputCenter.ToString()}@{scale}.png");
 
             using (Bitmap image = g.BuildImage(results))
             {
@@ -107,7 +105,12 @@ namespace Fractal_Generator
 
             Console.WriteLine("Image built.");
 
-            if (prompt.Prompt("Open the image with your default image program (Y or N)", PromptOptions.Optional, 'N', "Please enter only 'Y' or 'N'", validateYesNo, charToUpper) == 'Y')
+            if (prompt.Prompt("Open the image with your default image program (Y or N)",
+                              PromptOptions.Optional,
+                              'N',
+                              "Please enter only 'Y' or 'N'",
+                              validateYesNo,
+                              charToUpper) == 'Y')
             {
                 Process.Start(filename);
             }
