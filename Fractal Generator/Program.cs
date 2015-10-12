@@ -26,12 +26,17 @@ namespace Fractal_Generator
             // That said, we'll get this thing on CR so they can tell us how badly we fkd up.
 
             // Currently an arbitrary number.
-            ushort maxIterations = 1000;
-            maxIterations = prompt.Prompt("Enter the maximum number of iterations", PromptOptions.Optional, maxIterations);
+            ushort maxIterations = prompt.Prompt<ushort>("Enter the maximum number of iterations",
+                                                         PromptOptions.Optional,
+                                                         1000);
 
             // Let us consider a `width` and `height` of the generated image.
             Size imageSize = new Size(4096, 2340);
-            int imageWidth = prompt.Prompt("Enter the image width", PromptOptions.Optional, imageSize.Width);
+
+            int imageWidth = prompt.Prompt("Enter the image width",
+                                           PromptOptions.Optional,
+                                           imageSize.Width);
+
             imageSize = new Size(imageWidth, (int)(imageWidth / 3.5 * 2));
 
             // We need to fit the brot to [-2.5, 1], not sure how to do that yet.
@@ -48,9 +53,24 @@ namespace Fractal_Generator
 
             if (prompt.Prompt("Render a specific section", PromptOptions.Optional, 'N', null, validateYesNo, charToUpper) == 'Y')
             {
-                double centerX = prompt.Prompt("Center X coordinate from [-2.5, 1.0]", PromptOptions.Optional, 0.0, null, delegate (double val) { return val >= -2.5 && val <= 1.0; }, delegate (double val) { return -val; });
-                double centerY = prompt.Prompt("Center Y coordinate from [-1.0, 1.0]", PromptOptions.Optional, 0.0, null, delegate (double val) { return val >= -1.0 && val <= 1.0; });
-                scale = prompt.Prompt("Enter the scale to render from [1.0,inf)", PromptOptions.Optional, 1.0, null, delegate (double val) { return val >= 1.0; });
+                double centerX = prompt.Prompt("Center X coordinate from [-2.5, 1.0]",
+                                               PromptOptions.Optional,
+                                               0.0,
+                                               null,
+                                               delegate (double val) { return val >= -2.5 && val <= 1.0; },
+                                               delegate (double val) { return -val; });
+
+                double centerY = prompt.Prompt("Center Y coordinate from [-1.0, 1.0]",
+                                               PromptOptions.Optional,
+                                               0.0,
+                                               null,
+                                               delegate (double val) { return val >= -1.0 && val <= 1.0; });
+
+                scale = prompt.Prompt("Enter the scale to render from [1.0,inf)",
+                                      PromptOptions.Optional,
+                                      1.0,
+                                      null,
+                                      delegate (double val) { return val >= 1.0; });
 
                 SizeF oScaleSize = scaleSize;
                 scaleSize = new SizeF(scaleSize.Width * (float)scale, scaleSize.Height * (float)scale);
@@ -67,7 +87,7 @@ namespace Fractal_Generator
 
             // Setup the number of chunks to break into.
             int numberOfChunks = prompt.Prompt("Enter the number of chunks to break into", PromptOptions.Optional, numberOfCores * 2);
-            
+
             int numberOfColors = prompt.Prompt("Enter the number of colors to render",
                                                PromptOptions.Optional,
                                                32,
@@ -96,7 +116,9 @@ namespace Fractal_Generator
             Console.WriteLine($"Took {sw.ElapsedMilliseconds}ms.");
             Console.WriteLine("Mandelbrot created, building image...");
 
-            string filename = prompt.Prompt("Enter a file name to save as", PromptOptions.Optional, $"{inputCenter.ToString()}@{scale}.png");
+            string filename = prompt.Prompt("Enter a file name to save as",
+                                            PromptOptions.Optional,
+                                            $"{inputCenter.ToString()}@{scale}.png");
 
             using (Bitmap image = g.BuildImage(results))
             {
