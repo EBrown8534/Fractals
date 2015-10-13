@@ -21,7 +21,7 @@ namespace Fractal_Generator.Mandelbrot
         public int NumberOfColors { get; set; }
         public bool BlackFinalColor { get; set; }
 
-        private readonly Func<int, int, int> pointToIndex;
+        private readonly Func<int, int, int> _pointToIndex;
 
         public Generator(ILogger logger,
                          int numberOfCores,
@@ -31,15 +31,15 @@ namespace Fractal_Generator.Mandelbrot
                          int numberOfColors,
                          bool blackFinalColor)
         {
+            Logger = logger;
             NumberOfChunks = numberOfChunks;
             NumberOfColors = numberOfColors;
             MaxIterations = maxIterations;
             ImageSize = imageSize;
             NumberOfCores = numberOfCores;
             BlackFinalColor = blackFinalColor;
-            Logger = logger;
 
-            pointToIndex = delegate (int x, int y) { return y * ImageSize.Width + x; };
+            _pointToIndex = delegate (int x, int y) { return y * ImageSize.Width + x; };
         }
 
         public Color[] BuildColors()
@@ -47,9 +47,9 @@ namespace Fractal_Generator.Mandelbrot
             Logger?.LogInformation($"Building colors...");
             Color[] colors = new Color[NumberOfColors];
 
-            for (int i = 0; i < NumberOfColors - 1; i++)
+            for (int i = 0; i < NumberOfColors; i++)
             {
-                colors[i] = Color.FromArgb(255, 0, 0, (i + 1) * (256 / NumberOfColors));
+                colors[i] = Color.FromArgb(255, 0, 0, Math.Min((i + 1) * (256 / (NumberOfColors - 1)), 255));
             }
 
             if (BlackFinalColor)
@@ -72,7 +72,7 @@ namespace Fractal_Generator.Mandelbrot
             {
                 for (int x = 0; x < ImageSize.Width; x++)
                 {
-                    image.SetPixel(x, y, colors[results[pointToIndex(x, y)] / (int)(Math.Ceiling(MaxIterations / (double)NumberOfColors))]);
+                    image.SetPixel(x, y, colors[results[_pointToIndex(x, y)] / (int)(Math.Ceiling(MaxIterations / (double)NumberOfColors))]);
                 }
             }
 
@@ -80,18 +80,26 @@ namespace Fractal_Generator.Mandelbrot
             return image;
         }
 
-        public ushort[] Generate(Point center, SizeF scaleSize)
+        public List<Chunk> BuildChunks()
         {
             Logger?.LogInformation($"Building {NumberOfChunks} chunks...");
-            // Build our chunks.
             List<Chunk> chunks = new List<Chunk>(NumberOfChunks);
+
             for (int i = 0; i < NumberOfChunks; i++)
             {
                 chunks.Add(new Chunk(new Point(0, ImageSize.Height / NumberOfChunks * i), new Point(ImageSize.Width, ImageSize.Height / NumberOfChunks * (i + 1))));
             }
 
             Logger?.LogInformation($"Build chunks.");
-            Logger?.LogInformation($"Creating and assigning chunks, this may take a while...");
+            return chunks;
+        }
+
+        public ushort[] Generate(Point center, SizeF scaleSize)
+        {
+            // Build our chunks.
+            List<Chunk> chunks = BuildChunks();
+
+            Logger?.LogInformation($"Assigning chunks, this may take a while...");
 
             // Create and assign tasks (as we can).
             List<Task<Result>> tasks = new List<Task<Result>>();
@@ -116,8 +124,6 @@ namespace Fractal_Generator.Mandelbrot
             // Create the main results
             ushort[] results = new ushort[ImageSize.Width * ImageSize.Height];
 
-            Func<int, int, int> pointToIndex = delegate (int x, int y) { return y * ImageSize.Width + x; };
-
             // Make sure we finish our tasks and add them to our results.
             while (tasks.Count > 0)
             {
@@ -131,7 +137,7 @@ namespace Fractal_Generator.Mandelbrot
                     {
                         for (int x = 0; x < ImageSize.Width; x++)
                         {
-                            results[pointToIndex(x, y)] = result.Data[pointToIndex(x, (y - result.Chunk.Start.Y))];
+                            results[_pointToIndex(x, y)] = result.Data[_pointToIndex(x, (y - result.Chunk.Start.Y))];
                         }
                     }
 

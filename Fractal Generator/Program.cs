@@ -104,8 +104,7 @@ namespace Fractal_Generator
             Console.WriteLine("");
 
             Console.WriteLine($"Creating Mandelbrot image of size ({imageSize.Width},{imageSize.Height}) and max iteration count of {maxIterations}, splitting the image into {numberOfChunks} sections across {numberOfCores} cores.");
-
-
+            
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
