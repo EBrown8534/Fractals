@@ -10,7 +10,7 @@ namespace Fractal_Generator.Mandelbrot
 {
     public class Generator
     {
-        public const double twoSquared = 2 * 2;
+        public const double MaxDistance = 2 * 2;
 
         public ILogger Logger { get; }
 
@@ -205,7 +205,7 @@ namespace Fractal_Generator.Mandelbrot
                     ySquared = yL * yL;
                     xTemp = 0;
 
-                    while (xSquared + ySquared < twoSquared && iteration < maxIterations)
+                    while (xSquared + ySquared < MaxDistance && iteration < maxIterations)
                     {
                         xTemp = xSquared - ySquared + x0;
                         yL = 2 * xL * yL + y0;
